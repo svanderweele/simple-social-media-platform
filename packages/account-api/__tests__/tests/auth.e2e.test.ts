@@ -37,16 +37,18 @@ describe('Auth Controller', () => {
       const accountRepo = getDataSource().getRepository(Account);
       const userRepo = getDataSource().getRepository(User);
 
+      const user = await userRepo.save(
+        userRepo.create({
+          email: payload.email,
+          name: 'Awesome Name',
+        }),
+      );
+
       await accountRepo.save(
         accountRepo.create({
           username: payload.email,
           password: hashedPassword,
-          user: Promise.resolve(
-            userRepo.create({
-              email: payload.email,
-              name: 'Awesome Name',
-            }),
-          ),
+          user: Promise.resolve(user),
         }),
       );
 
@@ -82,9 +84,9 @@ describe('Auth Controller', () => {
   describe('Testing registration functionality', () => {
     it('should return a session token', async () => {
       const res = await request(app).post('/auth/register').send({
-        email: 'testuser@gmail.com',
-        password: 'Awesomepa$$123',
-        name: 'Awesome Name',
+        email: 'awesome.test+1@gmail.com',
+        password: 'mTtestssasogjsaokgsad$//a2@12',
+        name: 'Test Account',
       });
       expect(res.status).toBe(201);
     }, 10000);

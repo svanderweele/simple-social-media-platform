@@ -12,6 +12,6 @@ export class Account {
   @Column()
   password!: string;
 
-  @OneToOne(() => User, (user) => user.account, { lazy: true })
+  @OneToOne(() => User, (user) => user.account)
   user!: Promise<User>;
 }
