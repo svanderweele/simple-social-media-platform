@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validateErrors } from '@svdw/common';
-import * as authController from '../controllers/auth.controller';
+import * as authController from '../entrypoints/auth.controller';
 
 const router = Router();
 

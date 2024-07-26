@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Account } from '../entities/account.entity';
-import { User } from '../entities/user.entity';
 import { DatabaseError, getEnvironmentVariable, getLogger } from '@svdw/common';
+import { Account } from '../entities/account.entity';
+import { FriendMapping } from '../entities/friend-mapping.entity';
+import { FriendRequest } from '../entities/friend-request.entity';
 
 let datasource: DataSource | undefined = undefined;
 
@@ -25,7 +26,7 @@ export const initialiseAndGetDataSource = async (): Promise<DataSource> => {
       database: getEnvironmentVariable('DATABASE_NAME'),
       synchronize: getEnvironmentVariable('NODE_ENV') === 'development',
       logging: getEnvironmentVariable('NODE_ENV') === 'development',
-      entities: [Account, User],
+      entities: [Account, FriendMapping, FriendRequest],
       subscribers: [],
       migrations: [],
     });

@@ -1,0 +1,14 @@
+version: '3.9'
+name: realtime-api-dev
+
+services:
+  db:
+    container_name: realtime-api-db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: realtime_dev
+    ports:
+      - '5433:5432'

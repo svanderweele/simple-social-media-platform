@@ -1,7 +1,5 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Account } from '../entities/account.entity';
-import { User } from '../entities/user.entity';
 import { DatabaseError, getEnvironmentVariable, getLogger } from '@svdw/common';
 
 let datasource: DataSource | undefined = undefined;
@@ -25,7 +23,7 @@ export const initialiseAndGetDataSource = async (): Promise<DataSource> => {
       database: getEnvironmentVariable('DATABASE_NAME'),
       synchronize: getEnvironmentVariable('NODE_ENV') === 'development',
       logging: getEnvironmentVariable('NODE_ENV') === 'development',
-      entities: [Account, User],
+      entities: [],
       subscribers: [],
       migrations: [],
     });

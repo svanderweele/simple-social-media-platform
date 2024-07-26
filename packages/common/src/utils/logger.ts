@@ -23,6 +23,7 @@ export function getLogger(): Logger {
 export function initialiseLogger() {
   appLogger = createLogger({
     format: winston.format.combine(
+      winston.format.errors({ stack: true }),
       winston.format.timestamp(),
       winston.format.json(),
     ),

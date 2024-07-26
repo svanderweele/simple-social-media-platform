@@ -20,10 +20,11 @@ export * from './kafka/base-listener';
 export * from './kafka/base-producer';
 
 // Kafka Events
-
-// Account
 export * from './kafka/events/account-created.event';
 export * from './kafka/events/account-logged-in.event';
 export * from './kafka/events/account-logged-out.event';
+export * from './kafka/events/send-realtime-message.event';
 
 export * from './types/express/types';
+
+export * from './enums/enums';

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { register } from '../../../src/controllers/auth.controller';
 import * as authService from '../../../src/services/auth.service';
+import * as authController from '../../../src/entrypoints/auth.controller';
 import 'dotenv/config';
 
 import {
@@ -29,7 +29,7 @@ describe('Auth Controller', () => {
       .mockImplementation(() => Promise.resolve());
 
     // Act
-    await register(req, res, mockFunction);
+    await authController.register(req, res, mockFunction);
 
     // Assert
     expect(res).toHaveProperty('statusCode', 201);
@@ -51,7 +51,7 @@ describe('Auth Controller', () => {
       .mockImplementation(() => Promise.reject('some blown up error'));
 
     // Act
-    await register(req, res, mockFunction);
+    await authController.register(req, res, mockFunction);
 
     // Assert
     expect(mockFunction).toHaveBeenCalled();

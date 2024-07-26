@@ -1,0 +1,14 @@
+version: '3.9'
+name: friends-api-dev
+
+services:
+  db:
+    container_name: friends-api-db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: friends_dev
+    ports:
+      - '5434:5432'
