@@ -19,7 +19,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
-          cache: 'npm'
+          cache: "npm"
+      - name: Change Dir
+        run: cd backend
       - run: npm ci
       - name: Run unit tests
         run: npm test
