@@ -1,0 +1,127 @@
+version: '3.9'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - '2181:2181'
+
+  kafka:
+    image: wurstmeister/kafka:2.11-1.1.1
+    ports:
+      - '9092:9092'
+    links:
+      - zookeeper
+
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: 'account-created:1:1,account-logged-in:1:1,account-logged-out:1:1,realtime-send-message:1:1'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  account-api-dev-db:
+    container_name: auth-api-db
+    image: postgres
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready', '-d', 'auth_dev']
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: auth_dev
+    ports:
+      - '5432:5432'
+
+  seed-db:
+    build:
+      context: .
+      dockerfile: ./dev/Dockerfile
+    container_name: seed-db
+
+  realtime-api-dev-db:
+    container_name: realtime-api-db
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready', '-d', 'realtime_dev']
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: realtime_dev
+    ports:
+      - '5433:5432'
+
+  friends-api-dev-db:
+    container_name: friends-api-db
+    image: postgres
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready', '-d', 'friends_dev']
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: friends_dev
+    ports:
+      - '5434:5432'
+
+  resources:
+    platform: linux/x86_64
+    image: tianon/true
+    depends_on:
+      - kafka
+      - account-api-dev-db
+      - realtime-api-dev-db
+      - friends-api-dev-db
+
+  account-api:
+    build:
+      context: .
+      dockerfile: ./packages/account-api/Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      - DATABASE_HOST=host.docker.internal
+      - KAFKA_HOST=host.docker.internal
+      - DATABASE_NAME=auth_dev
+      - DATABASE_PORT=5432
+
+  realtime-api:
+    build:
+      context: .
+      dockerfile: ./packages/realtime-api/Dockerfile
+    ports:
+      - '3002:3002'
+    environment:
+      - DATABASE_HOST=host.docker.internal
+      - KAFKA_HOST=host.docker.internal
+      - DATABASE_PORT=5433
+
+  friends-api:
+    build:
+      context: .
+      dockerfile: ./packages/friends-api/Dockerfile
+    ports:
+      - '3003:3003'
+    environment:
+      - DATABASE_HOST=host.docker.internal
+      - KAFKA_HOST=host.docker.internal
+      - DATABASE_PORT=5434
+
+  apis:
+    platform: linux/x86_64
+    image: tianon/true
+    depends_on:
+      - account-api
+      - realtime-api
+      - friends-api
