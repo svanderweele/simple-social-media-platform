@@ -19,7 +19,12 @@ process.on('unhandledRejection', (reason) => {
 
 app.listen(getEnvironmentVariable('PORT'), async () => {
   validateEnvironmentVariables();
-  await initialiseAndGetDataSource();
+  try {
+    await initialiseAndGetDataSource();
+  } catch (error) {
+    console.error('Failed to connect to db ', error);
+  }
+
   await setupKafka();
   console.log(`Server listening on port ${getEnvironmentVariable('PORT')}`);
 });

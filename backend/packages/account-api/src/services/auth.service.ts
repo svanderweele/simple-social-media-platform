@@ -7,8 +7,18 @@ import { AccountInvalidCredentialsError } from '../errors/account-invalid-creden
 import jwt from 'jsonwebtoken';
 import { AccountCreatedProducer } from '../events/producers/account-created.producer';
 import { AccountLoggedInProducer } from '../events/producers/account-logged-in.producer';
+import { User } from '../entities/user.entity';
 
-export async function login(email: string, password: string): Promise<string> {
+export interface LoginResponse {
+  accountId: string;
+  sessionToken: string;
+  userId: string;
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<LoginResponse> {
   try {
     const account = await authRepository.getAccountByUsername(email);
 
@@ -34,7 +44,11 @@ export async function login(email: string, password: string): Promise<string> {
       accountId: account.id,
     });
 
-    return token;
+    return {
+      sessionToken: token,
+      accountId: account.id,
+      userId: account.user.id,
+    };
   } catch (error) {
     getLogger().error('Error trying to login', error);
     throw error;
@@ -65,4 +79,23 @@ export async function register(
     getLogger().error('Error trying to register', error);
     throw error;
   }
+}
+
+export interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  accountId: string;
+}
+
+export async function getUsers(): Promise<UserDto[]> {
+  const users = await authRepository.getUsers();
+  return users.map((user) => {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      accountId: user.account.id,
+    };
+  });
 }

@@ -1,23 +1,16 @@
 {
   "name": "@svdw/common",
-  "version": "0.0.26",
+  "version": "0.0.29",
   "description": "",
   "files": [
     "dist/**/*"
   ],
-  "main": "./src/index.ts",
-  "types": "./src/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "clean": "del ./dist/*",
     "build": "npm run clean && tsc",
-    "clean:auth": "cd ../auth-api/node_modules/@svdw/common && rm -R dist",
-    "clean:realtime": "cd ../realtime-api/node_modules/@svdw/common && rm -R dist",
-    "clean:services": "npm run clean:auth && npm run clean:gaming && npm run clean:realtime",
-    "update:auth": "cp -R ./dist ../auth-api/node_modules/@svdw/common/dist",
-    "update:realtime": "cp -R ./dist ../realtime-api/node_modules/@svdw/common/dist",
-    "update:services": "npm run update:auth && npm run update:gaming && npm run update:realtime",
-    "build:services": "npm run build && npm run clean:services && npm run update:services",
-    "pub": "git add . && git commit -m \"Updates\" && npm version patch && npm run build && npm publish"
+    "pub": "npm version patch && npm run build && npm publish"
   },
   "keywords": [],
   "author": "Simon van der Weele",
@@ -30,6 +23,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@svdw/common": "^0.0.29",
     "express": "^4.18.2",
     "express-correlation-id": "^2.0.1",
     "express-validator": "^7.0.1",

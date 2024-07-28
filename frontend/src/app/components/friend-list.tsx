@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Bounce, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { socket } from "@/app/utilities/socket";
+import { getSocket } from "@/app/utilities/socket";
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -14,8 +14,9 @@ import {
   getFriends,
   removeFriend,
 } from "../services/friend.service";
+import { getUsers, User } from "../services/user.service";
+import { login, SessionData } from "../services/auth.service";
 
-const TEMP_ACCOUNT_ID = "a2fb248d-f725-44c0-aec2-e4cc3a9a4b5f";
 
 const imageUrls: string[] = [
   "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
@@ -36,93 +37,72 @@ const getUserImage = (id: string): string => {
   return mappedImages[id];
 };
 
-type Person = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  lastSeen: string | null;
-  lastSeenDateTime: string | null;
-  isFriend: boolean;
-  image?: string | undefined;
-};
 
 export default function FriendList() {
-  const [users, setUsers] = useState<Person[]>([]);
-
+  const [email, setEmail] = useState("ricky@gmail.com")
+  const [sessionData, setSessionData] = useState<SessionData>({accountId:"", sessionToken:"", userId:""});
+  const [users, setUsers] = useState<User[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [friends, setFriends] = useState<string[]>([]);
 
   const onUpdateFriendRequests = (pendingRequests: FriendRequest[]) => {
-    setFriendRequests([...friendRequests, ...pendingRequests]);
+    const newFriendRequests = [...friendRequests, ...pendingRequests];
+    setFriendRequests(pendingRequests);
+    console.log("Update friend requests ", sessionData, newFriendRequests);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const friendRequests = await getFriendRequests();
-      setFriendRequests(friendRequests);
+  const loginToUser = async () => {
+    const sessionData = await login({username:email, password:"SomeAwesomePa$$work123"});
+    setSessionData(sessionData);
+  }
 
-      const startingUsers: Person[] = [
-        {
-          id: "5b9919d6-b4e4-4ddf-84ab-4ea7881c2c87",
-          name: "Michael Foster",
-          email: "michael.foster@example.com",
-          role: "Co-Founder / CTO",
-          lastSeen: "3h ago",
-          lastSeenDateTime: "2023-01-23T13:23Z",
-          isFriend: false,
-        },
-        {
-          id: "a2fb248d-f725-44c0-aec2-e4cc3a9a4b5f",
-          name: "Dries Vincent",
-          email: "dries.vincent@example.com",
-          role: "Business Relations",
-          lastSeen: null,
-          isFriend: false,
-          lastSeenDateTime: null,
-        },
-        {
-          id: "17df79e8-a0b6-4629-a8cc-381999d1cc65",
-          name: "Lindsay Walton",
-          email: "lindsay.walton@example.com",
-          role: "Front-end Developer",
-          lastSeen: "3h ago",
-          lastSeenDateTime: "2023-01-23T13:23Z",
-          isFriend: false,
-        },
-      ];
-      setUsers(
-        startingUsers.map((person) => {
-          person.image = getUserImage(person.id);
-          return person;
-        })
-      );
+  const fetchData = async () => {
+    const friendRequests = await getFriendRequests(sessionData.sessionToken);
+    onUpdateFriendRequests(friendRequests);
+    // setFriendRequests(friendRequests);
+    
+  const users = await getUsers(sessionData.sessionToken); 
 
-      const friends = await getFriends();
-      setFriends(friends);
+    setUsers(
+      users.map((user) => {
+        user.image = getUserImage(user.accountId);
+        return user;
+      })
+    );
 
-      friends.forEach((friendId) => {
-        const user = startingUsers.find((user) => user.id === friendId);
-        if (user) {
-          user.isFriend = true;
-        }
-      });
+    const friends = await getFriends(sessionData.sessionToken);
+    setFriends(friends);
 
-      setUsers(startingUsers.filter((x) => x.id !== TEMP_ACCOUNT_ID));
-    };
+    friends.forEach((friendId) => {
+      const user = users.find((user) => user.accountId === friendId);
+      if (user) {
+        user.isFriend = true;
+      }
+    });
 
-    fetchData();
+    setUsers(users.filter((x) => x.accountId !== sessionData.accountId));
+
+    const socket = getSocket(sessionData?.sessionToken);
 
     socket.on("friend-requests", onUpdateFriendRequests);
 
     return () => {
       socket.off("friend-requests", onUpdateFriendRequests);
     };
-  }, []);
+  };
+
+
+  useEffect(() => {
+    loginToUser();
+  },[]);
+
+  useEffect(() => {
+    fetchData();
+  }, [sessionData]);
 
   useEffect(() => {
     if (
-      friendRequests.filter((request) => request.friendId === TEMP_ACCOUNT_ID)
+      friendRequests.filter((request) => request.friendId === sessionData.accountId)
         .length > 0
     ) {
       toast(`🦄 You have ${friendRequests.length}  new friend requests`, {
@@ -140,6 +120,7 @@ export default function FriendList() {
   }, [friendRequests]);
 
   return (
+    <React.Fragment>
     <ul role="list" className="divide-y divide-gray-100">
       {users.map((user) => (
         <li key={user.email} className="flex justify-between gap-x-6 py-5">
@@ -168,40 +149,50 @@ export default function FriendList() {
                 </button>
               </p>
             ) : (
-              <ShowFriendButton person={user} friendRequests={friendRequests} />
+              <ShowFriendButton sessionData={sessionData} user={user} friendRequests={friendRequests} />
             )}
           </div>
         </li>
       ))}
+
+        <input
+        value={email} 
+        onChange={e => setEmail(e.target.value)} 
+        />
+        <button onClick={() => loginToUser()}>Login</button>
     </ul>
+    </React.Fragment>
   );
 }
 
-async function onClickAcceptFriend(friendId: string) {
-  await acceptFriendRequest({ friendId });
+async function onClickAcceptFriend(friendId: string, sessionToken:string) {
+  await acceptFriendRequest({ friendId}, sessionToken);
   //TODO: DISPATCH REDUX EVENT TO FETCH FRIENDS
 }
 
+
+
 function ShowFriendButton(props: {
-  person: Person;
+  sessionData: SessionData,
+  user: User;
   friendRequests: FriendRequest[];
 }) {
-  const { person, friendRequests } = props;
+  const { user, friendRequests, sessionData } = props;
 
   const friendRequest = friendRequests.find(
     (x) =>
-      (x.friendId == person.id && x.accountId === TEMP_ACCOUNT_ID) ||
-      (x.accountId == person.id && x.friendId === TEMP_ACCOUNT_ID)
+      (x.friendId == user.accountId && x.accountId === sessionData.accountId) ||
+      (x.accountId == user.accountId && x.friendId === sessionData.accountId)
   );
 
   if (friendRequest) {
     // If friend is the initiator
-    if (friendRequest.friendId !== person.id) {
+    if (friendRequest.friendId !== user.accountId) {
       return (
         <React.Fragment>
           <p className="mt-1 text-xs leading-5 text-gray-500">
             <button
-              onClick={async () => onClickAcceptFriend(person.id)}
+              onClick={async () => onClickAcceptFriend(user.accountId, sessionData.sessionToken)}
               className="bg-emerald-400 hover:bg-emerald-700 text-white font-bold py-1 px-2 rounded"
             >
               Accept Friend
@@ -216,7 +207,7 @@ function ShowFriendButton(props: {
         <p className="mt-1 text-xs leading-5 text-gray-500">
           <button
             onClick={async () =>
-              cancelFriendRequest({ friendId: friendRequest.friendId })
+              cancelFriendRequest({ friendId: friendRequest.friendId },sessionData.sessionToken)
             }
             className="bg-gray-400 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded"
           >
@@ -227,16 +218,16 @@ function ShowFriendButton(props: {
     );
   }
 
-  if (!person.isFriend) {
+  if (!user.isFriend) {
     return (
       <React.Fragment>
         <p className="mt-1 text-xs leading-5 text-gray-500">
           <button
             onClick={async () =>
               createFriendRequest({
-                accountId: TEMP_ACCOUNT_ID,
-                friendId: person.id,
-              })
+                accountId: sessionData.accountId,
+                friendId: user.accountId,
+              }, sessionData.sessionToken)
             }
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
           >
@@ -253,9 +244,9 @@ function ShowFriendButton(props: {
         <button
           onClick={async () =>
             removeFriend({
-              accountId: TEMP_ACCOUNT_ID,
-              friendId: person.id,
-            })
+              accountId: sessionData.accountId,
+              friendId: user.accountId,
+            }, sessionData.sessionToken)
           }
           className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
         >

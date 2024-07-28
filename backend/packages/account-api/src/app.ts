@@ -4,9 +4,11 @@ import bodyParser from 'body-parser';
 import { globalErrorHandler } from '@svdw/common';
 import correlator from 'express-correlation-id';
 import rateLimit from 'express-rate-limit';
+import cors from 'cors';
 
 const app = express();
 
+app.use(cors());
 app.use(correlator());
 app.use(bodyParser.json());
 app.use('/auth', authRoutes);

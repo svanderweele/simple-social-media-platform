@@ -21,7 +21,7 @@ router.get(
       const requests = await friendService.getFriends({
         accountId: req.user.id,
       });
-      res.status(201).json(requests);
+      res.status(200).json(requests);
     } catch (error) {
       next(error);
     }

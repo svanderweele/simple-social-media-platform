@@ -13,5 +13,5 @@ export class Account {
   password!: string;
 
   @OneToOne(() => User, (user) => user.account)
-  user!: Promise<User>;
+  user!: User;
 }

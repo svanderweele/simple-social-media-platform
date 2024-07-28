@@ -1,6 +1,5 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import { SESSION_TOKEN } from "../utilities/socket";
 
 const FRIENDS_HOST_URL = "http://localhost:3003";
 
@@ -10,11 +9,12 @@ export interface CreateFriendRequest {
 }
 
 export async function createFriendRequest(
-  request: CreateFriendRequest
+  request: CreateFriendRequest,
+  sessionToken:string
 ): Promise<void> {
   try {
     await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests`,
       method: "post",
       data: request,
@@ -29,11 +29,12 @@ export interface CancelFriendRequest {
   friendId: string;
 }
 export async function cancelFriendRequest(
-  request: CancelFriendRequest
+  request: CancelFriendRequest,
+  sessionToken:string
 ): Promise<void> {
   try {
     await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests`,
       method: "delete",
       data: { friendId: request.friendId },
@@ -51,11 +52,12 @@ export interface AcceptFriendRequest {
 }
 
 export async function acceptFriendRequest(
-  request: AcceptFriendRequest
+  request: AcceptFriendRequest,
+  sessionToken:string
 ): Promise<void> {
   try {
     await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests/accept`,
       method: "post",
       data: { friendId: request.friendId },
@@ -73,11 +75,12 @@ export interface DeclineFriendRequest {
 }
 
 export async function declineFriendRequest(
-  request: DeclineFriendRequest
+  request: DeclineFriendRequest,
+  sessionToken:string
 ): Promise<void> {
   try {
     await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests/decline`,
       method: "post",
       data: { friendId: request.friendId },
@@ -98,14 +101,10 @@ export interface FriendRequest {
   accountId: string;
 }
 
-export interface GetFriendRequests {
-  accountId: string;
-}
-
-export async function getFriendRequests(): Promise<FriendRequest[]> {
+export async function getFriendRequests(sessionToken:string): Promise<FriendRequest[]> {
   try {
     const response = await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests`,
       method: "get",
     });
@@ -118,10 +117,10 @@ export async function getFriendRequests(): Promise<FriendRequest[]> {
   }
 }
 
-export async function getFriends(): Promise<string[]> {
+export async function getFriends(sessionToken:string): Promise<string[]> {
   try {
     const response = await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friends`,
       method: "get",
     });
@@ -140,11 +139,12 @@ export interface RemoveFriendRequest {
 }
 
 export async function removeFriend(
-  request: RemoveFriendRequest
+  request: RemoveFriendRequest,
+  sessionToken:string
 ): Promise<void> {
   try {
     await axios({
-      headers: { Authorization: `bearer ${SESSION_TOKEN}` },
+      headers: { Authorization: `bearer ${sessionToken}` },
       baseURL: `${FRIENDS_HOST_URL}/friend-requests/remove`,
       method: "delete",
       data: { accountId: request.accountId, friendId: request.friendId },

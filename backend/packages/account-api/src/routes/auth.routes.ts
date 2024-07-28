@@ -47,4 +47,5 @@ router.post(
   authController.login,
 );
 
+router.get('/users', authController.getUsers);
 export default router;

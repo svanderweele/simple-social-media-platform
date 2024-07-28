@@ -109,7 +109,10 @@ export async function acceptFriendRequest(request: AcceptFriendRequest) {
     throw new FriendRequestNotFoundError();
   }
 
-  await friendRepository.acceptFriendRequest(request);
+  await friendRepository.acceptFriendRequest({
+    accountId: request.friendId,
+    friendId: request.accountId,
+  });
 }
 
 export interface DeclineFriendRequest {

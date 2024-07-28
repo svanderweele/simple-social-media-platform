@@ -12,7 +12,9 @@ export interface AccountRecord {
 export async function getAccountByUsername(
   username: string,
 ): Promise<Account | null> {
-  return await getDataSource().getRepository(Account).findOneBy({ username });
+  return await getDataSource()
+    .getRepository(Account)
+    .findOne({ where: { username }, relations: { user: true } });
 }
 
 export async function createAccount(dto: {
@@ -47,7 +49,7 @@ export async function createAccount(dto: {
     const account = accountRepository.create({
       password: hashedPassword,
       username: email,
-      user: Promise.resolve(savedUser),
+      user: savedUser,
     });
 
     const savedAccount = await queryRunner.manager
@@ -63,4 +65,10 @@ export async function createAccount(dto: {
   } finally {
     await queryRunner.release();
   }
+}
+
+export async function getUsers(): Promise<User[]> {
+  const repository = getDataSource().getRepository(User);
+  const users = await repository.find({ relations: { account: true } });
+  return users;
 }

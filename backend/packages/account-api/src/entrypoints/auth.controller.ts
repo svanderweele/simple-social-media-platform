@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/auth.service';
+import { User } from '../entities/user.entity';
 
 export async function register(
   req: Request,
@@ -17,6 +18,8 @@ export async function register(
 
 export interface LoginResponse {
   sessionToken: string;
+  accountId: string;
+  userId: string;
 }
 
 export async function login(
@@ -26,8 +29,31 @@ export async function login(
 ) {
   try {
     const { email, password } = req.body;
-    const sessionToken = await authService.login(email, password);
-    res.status(200).send({ sessionToken });
+    const { sessionToken, accountId, userId } = await authService.login(
+      email,
+      password,
+    );
+    res.status(200).send({ sessionToken, accountId, userId });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  accountId: string;
+}
+
+export async function getUsers(
+  req: Request,
+  res: Response<UserDto[]>,
+  next: NextFunction,
+) {
+  try {
+    const users = await authService.getUsers();
+    res.status(200).json(users);
   } catch (error) {
     next(error);
   }
